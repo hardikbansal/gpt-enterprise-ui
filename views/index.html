@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ChatGPT UI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            margin: 0 auto;
+            max-width: 600px;
+        }
+
+        .chatbox {
+            padding: 20px;
+            background-color: #f2f2f2;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .chatbox p {
+            margin: 0;
+            padding: 0;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .chatbox .user {
+            text-align: right;
+        }
+
+        .chatbox .bot {
+            text-align: left;
+        }
+
+        .input-box {
+            display: flex;
+            margin-top: 20px;
+        }
+
+        .input-box input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+        }
+
+        .input-box button {
+            padding: 10px;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ChatGPT UI</h1>
+
+        <div id="chat-history"></div>
+
+        <div class="input-box">
+            <input type="text" id="user-input" placeholder="Type your message...">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+
+    <script>
+        // define the API endpoint
+        const apiUrl = "/chat";
+
+        // get the UI elements
+        const chatHistoryElement = document.getElementById("chat-history");
+        const userInputElement = document.getElementById("user-input");
+        const sendButtonElement = document.getElementById("send-button");
+
+        // add an event listener to the send button
+        sendButtonElement.addEventListener("click", async () => {
+            // get the user input
+            const userInput = userInputElement.value.trim();
+
+            if (userInput !== "") {
+                // add the user message to the chat history
+                appendChatMessage("user", userInput);
+
+                // clear the user input
+                userInputElement.value = "";
+
+                try {
+                    // call the API to get the response
+                    const response = await fetch(apiUrl, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({query: userInput})
+                    });
+                    const responseData = await response.json();
+
+                    // add the bot response to the chat history
+                    appendChatMessage("bot", responseData.response);
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+        });
+
+        // function to append a chat message to the chat history
+        function appendChatMessage(sender, message) {
+            const chatboxElement = document.createElement("div");
+            chatboxElement.classList.add("chatbox");
+            chatboxElement.classList.add(sender);
+
+            const messageElement = document.createElement("p");
+            messageElement.textContent = message;
+
+            chatboxElement.appendChild(messageElement);
+            chatHistoryElement.appendChild(chatboxElement);
+        }
+    </script>
+</body>
+</html>
