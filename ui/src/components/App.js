@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {useNavigate, BrowserRouter as Router, Route, Routes} from 'react-router-dom'
-import Login from './components/Login';
-import Chat from './components/Chat';
+import Login from './Login';
+import Chat from './Chat';
 
 function App() {
     return (

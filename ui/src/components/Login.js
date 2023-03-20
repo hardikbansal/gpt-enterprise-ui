@@ -14,6 +14,7 @@ function Login() {
     const testLogin = () =>{
         console.log(localStorage.setItem('access_token',JSON.stringify({'token':'sample_token'})));
         console.log(JSON.parse(localStorage.getItem('access_token')));
+        redirect("/chat");
     }
 
     const loginUser = (user) => {

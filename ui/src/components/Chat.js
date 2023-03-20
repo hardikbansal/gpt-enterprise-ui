@@ -1,48 +1,77 @@
-import React, { useState } from 'react';
-import {useNavigate, Routes} from 'react-router-dom'
-import { googleLogout, useGoogleLogin } from '@react-oauth/google';
-import axios from 'axios';
+import React, { useState } from "react";
+import "./App.css";
 
 function Chat() {
-    const redirect = useNavigate();
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState([]);
 
-    const login = useGoogleLogin({
-        onSuccess: (codeResponse) => loginUser(codeResponse),
-        onError: (error) => console.log('Login Failed:', error)
-    });
+  // handle user input and send request to the API
+  const handleInput = async () => {
+    if (input.trim() !== "") {
+      const response = await fetch("/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ query: input }),
+      });
+      const data = await response.json();
 
-    const loginUser = (user) => {
-        localStorage.setItem("sso_token", user.access_token);
-        console.log(user);
-        axios
-            .get(`http://localhost:8080/api/accesstoken`, {
-                headers: {
-                    Authorization: `Bearer ${user.access_token}`,
-                    Accept: 'application/json'
-                }
-            })
-            .then((res) => {
-                localStorage.setItem("access_token", res.data);
-                redirect("/chat");
-            })
-            .catch((err) => {
-                console.log(err);
-                logOut();
-            });
-    };
-        
+      setMessages([
+        ...messages,
+        { text: input, sender: "user" },
+        { text: data.response, sender: "bot" },
+      ]);
+      setInput("");
+    }
+  };
 
-    // log out function to log the user out of google and set the profile array to null
-    const logOut = () => {
-        googleLogout();
-        localStorage.removeItem("sso_token");
-        localStorage.removeItem("access_token");
-    };
+  const handleInputTest = () =>{
+    setMessages([
+        ...messages,
+        { text: "hello", sender: "user" },
+        { text: "chatgpt response", sender: "bot" }, 
+    ])
+  } 
 
-    return (
-        <div>
-            <button onClick={() => login()}>Sign in with Google 🚀 on chat page </button>
+  // handle input on Enter key press
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      handleInput();
+    }
+  };
+
+  return (
+    <div className="App">
+      <div className="chat-header">
+        <h1>ChatGPT UI</h1>
+      </div>
+      <div className="chat-container">
+        <div className="chat-history">
+          {messages.map((message, index) => (
+            <div
+              key={index}
+              className={
+                message.sender === "user" ? "user-message" : "bot-message"
+              }
+            >
+              <p>{message.text}</p>
+            </div>
+          ))}
         </div>
-    );
+        <div className="chat-input">
+          <input
+            type="text"
+            placeholder="Type your message..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={handleKeyPress}
+          />
+          <button onClick={handleInputTest}>Send</button>
+        </div>
+      </div>
+    </div>
+  );
 }
+
 export default Chat;
