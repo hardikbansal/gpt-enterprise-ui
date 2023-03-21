@@ -16,10 +16,13 @@ type GoogleUserInfo struct {
 	Picture string `json:"picture"`
 }
 
-type AccessTokendata struct {
-	Token string `json:"token"`
+type User struct {
+	ID      uint   `json:"id"`
+	Email   string `json:"email"`
+	Name    string `json:"name"`
+	Picture string `json:"picture"`
 }
 
-func GetEmptyAccessToken() AccessTokendata {
-	return AccessTokendata{Token: ""}
+type AccessTokenData struct {
+	Token string `json:"token"`
 }

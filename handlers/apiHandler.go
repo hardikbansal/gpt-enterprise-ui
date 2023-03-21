@@ -27,7 +27,7 @@ func (handler *ApiHandler) CallChatGptApi(c *gin.Context) {
 	}
 
 	// call the OpenAI API
-	resp, err := handler.srv.CallChatGPTAPI(req.Query)
+	resp, err := handler.srv.CallChatGPTAPI(req.Query, 1, false)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
