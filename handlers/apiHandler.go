@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -56,13 +57,30 @@ func (handler *ApiHandler) GetAccessToken(c *gin.Context) {
 		case core.UnauthorizedError:
 			{
 				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+				return
 			}
 		default:
 			{
 				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+				return
 			}
 		}
 	}
 	c.JSON(http.StatusOK, jwtToken)
 
+}
+
+func (handler *ApiHandler) GetUserDetails(c *gin.Context) {
+	userId := c.GetInt("user_id")
+	user, err := handler.srv.GetUserDetails(userId)
+	if err != nil {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+	userData, err := json.Marshal(user)
+	if err != nil {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+	c.JSON(http.StatusOK, userData)
 }

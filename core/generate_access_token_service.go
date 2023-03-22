@@ -3,7 +3,6 @@ package core
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
 	logger "github.com/hardikbansal/gpt-enterprise-ui/logger"
 	"io/ioutil"
 	"net/http"
@@ -63,30 +62,10 @@ func (srv *ChatGptService) GenerateAccessToken(token string) (AccessTokenData, e
 		return AccessTokenData{}, err
 	}
 
-	jwtToken, err := generateUserJwtToken(user, time.Now().Add(time.Hour*24).Unix())
+	jwtToken, err := srv.authService.GenerateAuthToken(user, time.Now().Add(time.Hour*24).Unix())
 	if err != nil {
 		return AccessTokenData{}, err
 	}
 	return AccessTokenData{Token: jwtToken}, nil
 
-}
-
-func generateUserJwtToken(user User, expiry int64) (string, error) {
-	jsonProfile, err := json.Marshal(user)
-	if err != nil {
-		return "", fmt.Errorf("unable to marshal user model")
-	}
-
-	// Generate a new JWT token
-	claims := jwt.MapClaims{
-		"profile": string(jsonProfile),
-		"exp":     expiry,
-	}
-	intToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	jwtSecret := []byte("YOUR_SECRET_KEY")
-	jwtToken, err := intToken.SignedString(jwtSecret)
-	if err != nil {
-		return "", err
-	}
-	return jwtToken, nil
 }

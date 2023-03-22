@@ -29,17 +29,13 @@ func StartServer(handler *handlers.ApiHandler, port string) {
 		c.Next()
 	})
 
-	// serve the chat UI
-	//router.Use(static.Serve("/", static.LocalFile("./ui/build", true)))
-	//router.Static("/", "./ui/build")
-
 	// define the endpoint for the chat API
 	router.POST("/api/accesstoken", handler.GetAccessToken)
-	//router.POST("/chat", handler.CallChatGptApi)
-
-	//router.NoRoute(func(c *gin.Context) {
-	//	c.JSON(http.StatusNotFound, gin.H{"code": "PAGE_NOT_FOUND", "message": "Page not found"})
-	//})
+	group := router.Group("/api/", handler.AuthMiddleware())
+	group.GET("/user", handler.GetUserDetails)
 	logger.LogMessage("starting http server")
-	router.Run("0.0.0.0:" + port)
+	err := router.Run("0.0.0.0:" + port)
+	if err != nil {
+		return
+	}
 }

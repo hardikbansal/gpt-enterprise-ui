@@ -52,3 +52,9 @@ func (adapter *DbAdapter) getUserByEmail(email string) (User, error) {
 	result := adapter.db.Where(&User{Email: email}).First(&user)
 	return user, result.Error
 }
+
+func (adapter DbAdapter) GetUserById(userId int) (core.User, error) {
+	var user User
+	result := adapter.db.Where(&User{ID: uint(userId)}).First(&user)
+	return user.ToDomainUser(), result.Error
+}

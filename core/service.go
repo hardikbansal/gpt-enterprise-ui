@@ -8,9 +8,10 @@ func (e UnauthorizedError) Error() string {
 }
 
 type ChatGptService struct {
-	dbService DbService
+	dbService   DbService
+	authService AuthService
 }
 
-func GetNewService(dbService DbService) *ChatGptService {
-	return &ChatGptService{dbService: dbService}
+func GetNewService(dbService DbService, authService AuthService) *ChatGptService {
+	return &ChatGptService{dbService: dbService, authService: authService}
 }
