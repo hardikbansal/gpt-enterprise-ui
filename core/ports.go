@@ -5,14 +5,16 @@ type Service interface {
 	GenerateAccessToken(token string) (AccessTokenData, error)
 	VerifyAccessToken(token string) (User, error)
 	GetUserDetails(userId int) (User, error)
-	//GetConversationList(user User)
+	GetConversationList(user User) ([]Conversation, error)
 	//GetSavedPrompts(id int) ([]string, error)
-	//GetConversationMessages(id int)
+	GetConversationQueries(conversationId int) ([]Query, error)
 }
 
 type DbService interface {
 	GetOrCreateUser(email string, name string) (User, error)
 	GetUserById(userId int) (User, error)
+	GetConversationByUser(userId int) ([]Conversation, error)
+	GetQueriesByConversation(conversationId int) ([]Query, error)
 }
 
 type AuthService interface {

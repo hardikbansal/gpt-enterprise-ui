@@ -36,9 +36,9 @@ func (adapter *DbAdapter) GetOrCreateUser(email string, name string) (core.User,
 	user, err := adapter.getUserByEmail(email)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		user, err = adapter.createUser(email, name)
-		return user.ToDomainUser(), err
+		return user.ToCoreUser(), err
 	}
-	return user.ToDomainUser(), err
+	return user.ToCoreUser(), err
 }
 
 func (adapter *DbAdapter) createUser(email string, name string) (User, error) {
@@ -53,8 +53,29 @@ func (adapter *DbAdapter) getUserByEmail(email string) (User, error) {
 	return user, result.Error
 }
 
-func (adapter DbAdapter) GetUserById(userId int) (core.User, error) {
+func (adapter *DbAdapter) GetUserById(userId int) (core.User, error) {
 	var user User
 	result := adapter.db.Where(&User{ID: uint(userId)}).First(&user)
-	return user.ToDomainUser(), result.Error
+	return user.ToCoreUser(), result.Error
+}
+
+// GetConversationByUser function to get conversation based on user and return it after mapping it to core conversation
+// using ToCoreConversation function and also fetch only last 20 conversations based on CreatedAt field
+func (adapter *DbAdapter) GetConversationByUser(userId int) ([]core.Conversation, error) {
+	var conversations []Conversation
+	result := adapter.db.Where(&Conversation{UserID: uint(userId)}).Order("created_at DESC").Limit(20).Find(&conversations)
+	// loop on conversation and map conversation to core.conversation using toCoreConversation
+	return Map(conversations, func(c Conversation) core.Conversation {
+		return c.ToCoreConversation()
+	}), result.Error
+}
+
+// GetQueriesByConversation function to get query based on ConversationID and return list after mapping it to core message
+// model using ToCoreQuery function. Only fetch last 20 messages based on CreatedAt field
+func (adapter *DbAdapter) GetQueriesByConversation(conversationId int) ([]core.Query, error) {
+	var query []Query
+	result := adapter.db.Where(&Query{ConversationID: uint(conversationId)}).Order("created_at DESC").Limit(20).Find(&query)
+	return Map(query, func(q Query) core.Query {
+		return q.ToCoreQuery()
+	}), result.Error
 }
