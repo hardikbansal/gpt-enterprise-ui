@@ -30,9 +30,13 @@ func StartServer(handler *handlers.ApiHandler, port string) {
 	})
 
 	// define the endpoint for the chat API
-	router.POST("/api/accesstoken", handler.GetAccessToken)
+	router.GET("/api/accesstoken", handler.GetAccessToken)
 	group := router.Group("/api/", handler.AuthMiddleware())
 	group.GET("/user", handler.GetUserDetails)
+	group.POST("/conversation", handler.CreateNewConversation)
+	group.GET("/conversation", handler.GetConversations)
+	group.POST("/query", handler.DoQuery)
+	group.GET("/query", handler.GetQueries)
 	logger.LogMessage("starting http server")
 	err := router.Run("0.0.0.0:" + port)
 	if err != nil {

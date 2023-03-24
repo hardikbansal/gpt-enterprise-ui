@@ -79,3 +79,21 @@ func (adapter *DbAdapter) GetQueriesByConversation(conversationId int) ([]core.Q
 		return q.ToCoreQuery()
 	}), result.Error
 }
+
+func (adapter *DbAdapter) CreateNewConversation(userId int, conversationName string) error {
+	result := adapter.db.Create(&Conversation{UserID: uint(userId), Name: conversationName})
+	return result.Error
+}
+
+func (adapter *DbAdapter) StoreQueryForConversation(conversationId int, query string, response []byte, context int) error {
+	result := adapter.db.Create(&Query{ConversationID: uint(conversationId), Query: query, Response: response, Context: int32(context)})
+	return result.Error
+}
+
+func (adapter *DbAdapter) GetContextForQuery(conversationId int, context int) ([]core.Query, error) {
+	var queries []Query
+	result := adapter.db.Where(&Query{ConversationID: uint(conversationId)}).Order("created_at DESC").Limit(context).Find(&queries)
+	return Map(queries, func(q Query) core.Query {
+		return q.ToCoreQuery()
+	}), result.Error
+}

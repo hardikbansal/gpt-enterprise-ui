@@ -30,12 +30,27 @@ type Conversation struct {
 }
 
 type Query struct {
-	ID        uint   `json:"id"`
-	Query     string `json:"query"`
-	Response  string `json:"response"`
-	CreatedAt string `json:"created_at"`
+	ID             uint   `json:"id"`
+	ConversationId uint   `json:"conversation_id"`
+	Query          string `json:"query"`
+	Response       string `json:"response"`
+	IsContext      string `json:"is_context"`
+	CreatedAt      string `json:"created_at"`
+}
+
+type LLMPrompt struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
 }
 
 type AccessTokenData struct {
 	Token string `json:"token"`
+}
+
+type LLMResponse struct {
+	Response  []LLMPrompt `json:"response"`
+	Id        string      `json:"id"`
+	CreatedAt string      `json:"created_at"`
+	Model     string      `json:"model"`
+	Usage     string      `json:"usage"`
 }
