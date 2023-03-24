@@ -1,30 +1,39 @@
-const ConversationMenu = (props) => {
-    const chats = ["Dashboard"];
+import {useRef, useState} from "react";
+import AddNewButton from "./AddNewButton";
+
+function ConversationMenu(props) {
+    const [selectedChat, setSelectedChat] = useState(0)
+
+
     return (
-      <div class="w-full">
-          <div class="flex items-center space-x-4 p-2">
-              <button class="font-semibold text-lg text-gray-700 hover:bg-gray-200 rounded-md p-2 capitalize font-poppins tracking-wide">Chats</button>
-              <button class="font-semibold spaces-x-3 text-lg text-gray-700 hover:bg-gray-200 p-2 rounded-md capitalize font-poppins tracking-wide">Prompts</button>
-          </div>
-          <div class="mt-5 text-sm">
-            <a href="#" class="flex items-center space-x-3 text-gray-700 p-2 rounded-md font-medium hover:bg-gray-200 bg-gray-200 focus:shadow-outline">
-              <span>➕ Add new</span>
-            </a>
-          </div>
-          {chats.map((chat) => (
-            <div class="mt-3">
-                <a href="#" class="flex items-center space-x-3 text-gray-700 p-2 rounded-md font-medium hover:bg-gray-200 bg-gray-200 focus:shadow-outline">
-                  <span>{chat}</span>
-                </a>
+        <>
+            <div className="flex-wrap overflow-y-auto scroll-hide flex-grow">
+                {
+                    props.conversations.map((conversation, index) => (
+                        <div className="w-full flex">
+                            <button onClick={() => {
+                                setSelectedChat(index);
+                                props.conversationClick({id: conversation.id})
+                            }}
+                                    className={"flex flex-grow my-1 items-center space-x-3 text-gray-900 rounded-lg mx-3 px-4 py-2 font-medium capitalize hover:bg-gray-200 focus:shadow-outline " + (selectedChat === index ? "bg-gray-200" : "")}>
+
+
+                                <span>{(conversation.name === "") ? "Undefined" : conversation.name}</span>
+                            </button>
+                        </div>
+                    ))
+                }
             </div>
-          ))}
-          <div class="flex items-center space-x-3 mb-4 p-2 bg-gray-200 rounded-md absolute bottom-0">
-            <input id="checkbox" type="checkbox" value="" class="w-4 h-4 bg-gray-100 border-gray-300 accent-gray-700 rounded focus:"/>
-            <label for="checkbox" class="text-sm text-gray-700 font-medium ml-3">Send Context</label>
-          </div>
-      </div>
+
+            <div className="mb-5 w-full flex items-center justify-center">
+                {/*<input ref={queryRef} maxLength={20} placeholder="Write a new chat" className="flex w-full p-2 text-sm items-centerspace-x-3 text-black placeholder-gray-400 rounded-md bg-gray-100" ></input>*/}
+                <AddNewButton onClick={() => {
+                    props.addConversationClick()
+                }} name="Add Conversation"/>
+            </div>
+
+        </>
     );
-  };
-  
-  export default ConversationMenu;
-  
+}
+
+export default ConversationMenu;

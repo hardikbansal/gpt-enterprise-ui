@@ -8,8 +8,8 @@ type Service interface {
 	GetConversationsForUser(userId int) ([]Conversation, error)
 	GetQueriesForConversation(conversationId int) ([]Query, error)
 	CreateNewConversation(userId int, conversationName string) ([]Conversation, error)
-	//GetSavedPrompts(id int) ([]string, error)
-	//GetConversationQueries(conversationId int) ([]Query, error)
+	GetTemplates(userId int) ([]Template, error)
+	StoreTemplate(userId int, templateName string, parts []string, params []string) ([]Template, error)
 }
 
 type DbService interface {
@@ -20,6 +20,8 @@ type DbService interface {
 	CreateNewConversation(userId int, conversationName string) error
 	StoreQueryForConversation(conversationID int, query string, response []byte, context int) error
 	GetContextForQuery(conversationId int, maxContext int) ([]Query, error)
+	GetTemplatesByUserId(userId int) ([]Template, error)
+	StoreTemplate(templateName string, userId int, parts []string, params []string) error
 }
 
 type AuthService interface {
@@ -29,4 +31,5 @@ type AuthService interface {
 
 type LLMService interface {
 	Query(prompt []LLMPrompt) ([]byte, error)
+	ResponseToLLMPrompt(response []byte) (LLMPrompt, error)
 }

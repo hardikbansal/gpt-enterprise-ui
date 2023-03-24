@@ -24,11 +24,11 @@ func (j *JSON) Scan(value interface{}) error {
 }
 
 // Value return json value, implement driver.Valuer interface
-func (j *JSON) Value() (driver.Value, error) {
-	if len(*j) == 0 {
+func (j JSON) Value() (driver.Value, error) {
+	if len(j) == 0 {
 		return nil, nil
 	}
-	return json.RawMessage(*j).MarshalJSON()
+	return json.RawMessage(j).MarshalJSON()
 }
 
 // Model Definitions
@@ -62,11 +62,17 @@ type Query struct {
 	Conversation   Conversation
 }
 
-type Prompt struct {
-	ID        uint
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Query     string `gorm:"not null"`
-	UserID    uint
-	User      User
+type Template struct {
+	ID         uint
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	Name       string `gorm:"not null"`
+	Properties JSON   `gorm:"type:jsonb;default:'{}'"`
+	UserID     uint
+	User       User
+}
+
+type TemplateProperties struct {
+	Parts  []string `json:"parts"`
+	Params []string `json:"params"`
 }

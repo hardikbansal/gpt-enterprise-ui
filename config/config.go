@@ -12,39 +12,24 @@ type AppConfig struct {
 	// cache
 	CacheLocation string `env:"CACHE_LOCATION"`
 
-	Port    string `env:"PORT"`
+	Port    string `env:"API_PORT"`
 	IsDebug bool   `env:"IS_DEBUG"`
 
+	EmailDomain string `env:"EMAIL_DOMAIN"`
+
+	ApiKey string `env:"API_KEY"`
+
 	// // default database
-	// DefaultDatabaseName     string `env:"DEFAULT_DATABASE_NAME"`
-	// DefaultDatabasePassword string `env:"DEFAULT_DATABASE_PASSWORD"`
-	// DefaultDatabaseUser     string `env:"DEFAULT_DATABASE_USER"`
-	// DefaultDatabaseHost     string `env:"DEFAULT_DATABASE_HOST"`
-	// DefaultDatabasePort     uint16 `env:"DEFAULT_DATABASE_PORT"`
+	DatabaseName     string `env:"DATABASE_NAME"`
+	DatabasePassword string `env:"DATABASE_PASSWORD"`
+	DatabaseUser     string `env:"DATABASE_USER"`
+	DatabaseHost     string `env:"DATABASE_HOST"`
+	DatabasePort     string `env:"DATABASE_PORT"`
 
-	// // read database
-	// ReadDatabaseName     string `env:"READ_DATABASE_NAME"`
-	// ReadDatabaseUser     string `env:"READ_DATABASE_USER"`
-	// ReadDatabasePassword string `env:"READ_DATABASE_PASSWORD"`
-	// ReadDatabaseHost     string `env:"READ_DATABASE_HOST"`
-	// ReadDatabasePort     uint16 `env:"READ_DATABASE_PORT"`
-
-	// // write database
-	// WriteDatabaseName     string `env:"WRITE_DATABASE_NAME"`
-	// WriteDatabaseUser     string `env:"WRITE_DATABASE_USER"`
-	// WriteDatabasePassword string `env:"WRITE_DATABASE_PASSWORD"`
-	// WriteDatabaseHost     string `env:"WRITE_DATABASE_HOST"`
-	// WriteDatabasePort     uint16 `env:"WRITE_DATABASE_PORT"`
-
-	IsSentryActivated    bool    `env:"ACTIVATE_SENTRY"`
-	SentryKey            string  `env:"SENTRY_KEY"`
-	SentryUrl            string  `env:"SENTRY_URL"`
-	SentryEnvironment    string  `env:"SENTRY_ENVIRONMENT"`
-	SentryLevelCode      string  `env:"SENTRY_LEVEL_CODE"`
-	SentryEventLevelCode string  `env:"SENTRY_EVENT_LEVEL_CODE"`
-	SentrySampleRatePct  float64 `env:"SENTRY_API_PERF_SAMPLE_RATE_PCT"`
-
-	GitCommitId string `env:"GIT_COMMIT"`
+	IsSentryActivated bool   `env:"ACTIVATE_SENTRY"`
+	SentryKey         string `env:"SENTRY_KEY"`
+	SentryUrl         string `env:"SENTRY_URL"`
+	SentryEnvironment string `env:"SENTRY_ENVIRONMENT"`
 }
 
 var lock = &sync.Mutex{}
@@ -52,10 +37,10 @@ var lock = &sync.Mutex{}
 var appConfig *AppConfig
 
 func loadConfig() (config AppConfig, err error) {
-	configPath := "./config/app.env"
+	configPath := "/config/.env"
 	err = godotenv.Load(configPath)
 	if err != nil {
-		log.Fatalf("unable to load .env file: %e", err)
+		log.Fatalf("unable to load .env file: %e from %s", err, configPath)
 	}
 
 	if err = env.Parse(&config); err != nil {

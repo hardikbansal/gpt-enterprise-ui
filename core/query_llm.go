@@ -4,9 +4,21 @@ import (
 	"encoding/json"
 )
 
+func reverse(arr []Query) {
+	i := 0
+	j := len(arr) - 1
+	for i < j {
+		arr[i], arr[j] = arr[j], arr[i]
+		i++
+		j--
+	}
+}
+
 func (srv *ChatGptService) QueryLLM(query string, conversationId int, isContext bool) ([]Query, error) {
 	var context []Query
+	var numContext = 0
 	if isContext {
+		numContext = 4
 		queries, err := srv.dbService.GetContextForQuery(conversationId, 4)
 		context = append(context, queries...)
 		if err != nil {
@@ -16,13 +28,17 @@ func (srv *ChatGptService) QueryLLM(query string, conversationId int, isContext 
 
 	// preparing prompt based on context
 	prompt := make([]LLMPrompt, 0, len(context)*2)
-
-	for _, e := range context {
-		prompt = append(prompt, LLMPrompt{Role: "user", Content: "Say this is a test!"})
-		prompt = append(prompt, LLMPrompt{Role: "bot", Content: "Say this is a test!"})
+	reverse(context)
+	for _, c := range context {
+		prompt = append(prompt, LLMPrompt{Role: "user", Content: c.Query})
+		resp, err := srv.llmService.ResponseToLLMPrompt([]byte(c.Response))
+		if err != nil {
+			prompt = append(prompt, LLMPrompt{Role: "assistant", Content: "# ERROR"})
+		}
+		prompt = append(prompt, resp)
 	}
 
-	prompt = append(prompt, LLMPrompt{Role: "user", Content: "Say this is a test!"})
+	prompt = append(prompt, LLMPrompt{Role: "user", Content: query})
 	resp, err := srv.llmService.Query(prompt)
 	if err != nil {
 		return nil, err
@@ -39,7 +55,7 @@ func (srv *ChatGptService) QueryLLM(query string, conversationId int, isContext 
 	}
 
 	// store response in db
-	err = srv.dbService.StoreQueryForConversation(conversationId, query, resp, isContext)
+	err = srv.dbService.StoreQueryForConversation(conversationId, query, resp, numContext)
 	if err != nil {
 		return nil, err
 	}

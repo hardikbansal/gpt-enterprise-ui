@@ -3,6 +3,7 @@ package core
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/hardikbansal/gpt-enterprise-ui/config"
 	logger "github.com/hardikbansal/gpt-enterprise-ui/logger"
 	"io/ioutil"
 	"net/http"
@@ -38,7 +39,7 @@ func validateGoogleUserDetails(token string) (GoogleUserInfo, error) {
 	if err != nil {
 		return GoogleUserInfo{}, err
 	}
-	if userInfo.Email == "" {
+	if userInfo.Email == "" || userInfo.HD != config.GetInstance().EmailDomain {
 		logger.LogProblem("%s", string(userData))
 		return GoogleUserInfo{}, err
 	}
@@ -49,13 +50,18 @@ func validateGoogleUserDetails(token string) (GoogleUserInfo, error) {
 
 func (srv *ChatGptService) GenerateAccessToken(token string) (AccessTokenData, error) {
 
-	userInfo, err := validateGoogleUserDetails(token)
-	if err != nil {
-		return AccessTokenData{}, err
-	}
+	var userInfo GoogleUserInfo
 
-	// testing purpose
-	//userInfo := GoogleUserInfo{Email: "hardik@frnd.app", Name: "Hardik Bansal"}
+	if config.GetInstance().IsDebug {
+		// testing purpose
+		userInfo = GoogleUserInfo{Email: "sameple_email@email", Name: "Sample Name"}
+	} else {
+		uInfo, err := validateGoogleUserDetails(token)
+		if err != nil {
+			return AccessTokenData{}, err
+		}
+		userInfo = uInfo
+	}
 
 	user, err := srv.dbService.GetOrCreateUser(userInfo.Email, userInfo.Name)
 	if err != nil {

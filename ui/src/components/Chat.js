@@ -1,138 +1,195 @@
-import React, { useState } from "react";
+import React, {useEffect, useRef, useState} from "react";
 import MarkdownView from 'react-showdown';
 import "./Chat.css";
 import ConversationMenu from "./ConversationMenu";
-import SendLogo from "../assets.images/send.png"
+import axios from 'axios';
+import ChatInputBox from "./ChatInput";
+import ChatBox from "./ChatBox";
+import AddNewButton from "./AddNewButton";
+import AddConversationPopup from "./AddConversationPopup";
+import SideMenu from "./SideMenu";
+import AddTemplatePopup from "./AddTemplatePopup";
+import ChatWindow from "./ChatWindow";
 
-function Chat() {
-  const [input, setInput] = useState("");
-  const markdown = `
-  Yes, I can generate the python code to generate fibonacci sequence.
-Here is the code below:
+function Conversation() {
+    const token = localStorage.getItem('user_token')
+    const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer ' + token
+    }
 
-\`\`\`
-def fib(n):
-    if n <= 0:
-        return []
-    elif n == 1:
-        return [0]
-    else:
-        fib_list = [0, 1]
-        while len(fib_list) < n:
-            fib_list.append(fib_list[-1] + fib_list[-2])
-        return fib_list
-\`\`\`
+    const sample_temps = [{
+        "id": 1,
+        "name": "Sample Template",
+        "template": {
+            parts: ["Write a short mail regarding ", ". Make is short a sweet", ""],
+            params: ["mail_topic", "email_topic"]
+        }
+    }]
+    const [context, setContext] = useState(false)
 
-This fibonacci function takes an integer 'n' as input and returns the first 'n' fibonacci numbers in a list starting from 0.
-If 'n' is less than or equal to 0, it returns an empty list. If 'n' is 1, it returns a list containing only 0.
-For larger values of 'n', the function uses a while loop to generate the fibonacci sequence and add them to the list until the length of the list becomes equal to 'n'.
-  `;
-  const [messages, setMessages] = useState([
-    { text: "sample question", sender: "user" },
-    { text: markdown, sender: "bot" },
-    { text: "sample question", sender: "user" },
-    { text: markdown, sender: "bot" },
-  ]);
+    const CONVERSATION_URL = process.env.REACT_APP_API_ENDPOINT + "/api/conversation"
+    const TEMPLATE_URL = process.env.REACT_APP_API_ENDPOINT + "/api/template"
 
-  // handle user input and send request to the API
-  const handleInput = async () => {
-    if (input.trim() !== "") {
-      const response = await fetch("/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+    const [conversations, setConversations] = useState([]);
+    const [templates, setTemplates] = useState([]);
+
+    const [selectedTemplate, setSelectedTemplate] = useState(null);
+
+    const [conversationId, setConversationId] = useState(-1)
+    const [showAddConversationPopup, setShowAddConversationPopup] = useState(false);
+    const [showAddTemplatePopup, setShowAddTemplatePopup] = useState(false);
+
+    function getConversations() {
+        axios
+            .get(CONVERSATION_URL, {
+                headers: headers
+            })
+            .then((res) => {
+                console.log("Conversations: ", res.data)
+                setConversations(res.data)
+                console.log("Selected Conv: ", res.data[0].id)
+                openConversation(res.data[0])
+            })
+            .catch((err) => {
+                console.log(err);
+            });
+    }
+
+    function getTemplates() {
+        axios
+            .get(TEMPLATE_URL, {
+                headers: headers
+            })
+            .then((res) => {
+                console.log("Templates: ", res.data)
+                setTemplates(res.data)
+            })
+            .catch((err) => {
+                console.log(err);
+            });
+    }
+
+    useEffect(
+        () => {
+            getConversations()
+            getTemplates()
         },
-        body: JSON.stringify({ query: input }),
-      });
-      const data = await response.json();
+        []
+    );
 
-      setMessages([
-        ...messages,
-        { text: input, sender: "user" },
-        { text: data.response, sender: "bot" },
-      ]);
-      setInput("");
+    function openConversation(conversationData) {
+        setConversationId(conversationData.id)
     }
-  };
 
-  const handleInputTest = (query) => {
-    console.log(query);
-    setMessages([
-      ...messages,
-      { text: "hello", sender: "user" },
-      { text: "chatgpt response", sender: "bot" },
-    ])
-  };
-
-  // handle input on Enter key press
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      handleInput();
+    function createConversation(conversationName) {
+        if (conversationName === "") return
+        setShowAddConversationPopup(false)
+        axios.post(CONVERSATION_URL,
+            {name: conversationName},
+            {headers: headers}
+        )
+            .then(resp => {
+                setConversations(resp.data)
+            })
+            .catch(error => console.log(error))
     }
-  };
 
-  return (
-    <div className="flex flex-row h-screen">
-      <div className="w-1/5 h-full">
-        <ConversationMenu/>
-      </div>
-      <div className="flex flex-col">
-          <ConverstationList messages={messages}/>
-          <InputBox messages={messages} bt_title="Submit" onSubmit={handleInputTest} />
-      </div>
-    </div>
-  );
-}
 
-function ConverstationList(props) {
-  console.log(props);
-  
-  return (
-    <div className="flex-grow chat-container pb-10 mr-2 bg-gray-50 overflow-y-auto scroll-hide">
-      <div className="chat-history">
-        {props.messages.map((message, index) => (
-          <div className="block w-full p-6 text-sm border border-gray-300 rounded-lg bg-gray-50 my-3 mx-2">
+    function templateFormat(template){
+        const regex1 = /{[\w\d_]+}/gm;
+        console.log("Template for format:", template);
+        const iter = template.matchAll(regex1);
+        const parts= template.split(regex1);
+        const params = []
+        for (let n = iter.next(); !n.done; n = iter.next()) {
+            params.push(n.value[0])
+        }
+
+        return {
+            "params" : params,
+            "parts": parts
+        }
+
+    }
+
+    function createTemplate(templateName, template) {
+        if (templateName === "" || template === "") return
+        setShowAddTemplatePopup(false)
+        const formattedTemplate = templateFormat(template)
+        console.log("Formatted template: " ,formattedTemplate);
+        axios.post(TEMPLATE_URL,
+            {name: templateName, parts: formattedTemplate.parts, params: formattedTemplate.params },
+            {headers: headers}
+        )
+            .then(resp => {
+                setTemplates(resp.data)
+            })
+            .catch(error => {
+                console.log(error)
+            })
+    }
+
+
+
+    let conversationMenuProps = {
+        conversations: conversations,
+        conversationClick: openConversation,
+        addConversationClick: () => {
+            setShowAddConversationPopup(true)
+        },
+
+    }
+
+
+    let templateMenuProps = {
+        templates: templates,
+        addTemplateClick: () => {
+            setShowAddTemplatePopup(true)
+        },
+        onTemplateSelect: (temp) => {
+            console.log("Setting selected template: ", temp)
+            setSelectedTemplate(temp)
+        },
+    }
+
+    return (
+        <div className="flex flex-row h-screen bg-white">
+
+            <div className="flex w-1/6 h-full flex-col shadow bg-gray-50">
+                <SideMenu setContext={setContext} templateProps={templateMenuProps} conversationMenuProps={conversationMenuProps}/>
+            </div>
+
+            <ChatWindow showAddConversationPopup={() => {
+                setShowAddConversationPopup(true)
+            }}
+                        conversationId={conversationId}
+                        template={selectedTemplate}
+                        context={context}
+                        onTemplateRemove={() => {
+                            setSelectedTemplate(null)
+                        }}
+            />
+
             {
-            (message.sender === "user") ? (
-              <article className="max-w-full text-base">
-                {message.text}
-            </article>
-            ): (
-              <MarkdownView className="prose max-w-full" markdown={message.text}>
-            </MarkdownView>
-            )
-            } 
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+                showAddConversationPopup ? (<AddConversationPopup onClick={createConversation}
+                                                                  onCancel={() => {
+                                                                      setShowAddConversationPopup(false)
+                                                                  }}
+                />) : null
+            }
+
+            {
+                showAddTemplatePopup ? (<AddTemplatePopup onClick={createTemplate} onCancel={() => {
+                    setShowAddTemplatePopup(false)
+                }}
+                />) : null
+            }
+
+        </div>
+    );
 }
 
 
-function InputBox(props) {
-  var [query, setQuery] = useState("");
-
-  function onInputChange(event) {
-    setQuery(event.target.value);
-  }
-
-  function onClick () {
-    props.onSubmit(query);
-    console.log(query);
-    setQuery("");
-  }
-
-  return (
-    
-      <div className="w-full flex p-6 text-sm border border-gray-300 rounded-lg bg-gray-50 py-3 px-2">
-        <input type="text" id="query" value={query} onChange={onInputChange}
-          className="block w-full max-w-full p-4 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-          placeholder="Write a question" required />  
-        <img src={SendLogo} width="40" stroke onClick={onClick} alt="send logo"/>
-      </div>
-
-  );
-}
-
-export default Chat;
+export default Conversation;

@@ -20,8 +20,7 @@ func main() {
 		logger.LogPanic("config not found")
 	}
 	logger.InitiateLogger()
-
-	dbService, err := db.GetDbAdapter("postgres://chatgpt:chatgpt@localhost:5432/chatgpt")
+	dbService, err := db.GetDbAdapter(fmt.Sprintf("postgres://%s:%s@%s:%s/%s", appConfig.DatabaseUser, appConfig.DatabasePassword, appConfig.DatabaseHost, appConfig.DatabasePort, appConfig.DatabaseName))
 	authService := &auth.Service{}
 	llmService := &llm.Service{}
 	dbService.RunMigrations()

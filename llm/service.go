@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/goccy/go-json"
+	"github.com/hardikbansal/gpt-enterprise-ui/config"
 	"github.com/hardikbansal/gpt-enterprise-ui/core"
 	logger "github.com/hardikbansal/gpt-enterprise-ui/logger"
 	"io/ioutil"
@@ -11,7 +12,6 @@ import (
 )
 
 const OPEN_API_URL = "https://api.openai.com/v1/chat/completions"
-const API_KEY = "sk-temp"
 
 type Service struct {
 }
@@ -44,7 +44,7 @@ func (s *Service) Query(prompts []core.LLMPrompt) ([]byte, error) {
 
 	// set the API key in the headers
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", API_KEY))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", config.GetInstance().ApiKey))
 
 	// send the request
 	resp, err := client.Do(req)
@@ -58,6 +58,19 @@ func (s *Service) Query(prompts []core.LLMPrompt) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	println("%s", string(body))
+	println(string(body))
 	return body, nil
+}
+
+func (s *Service) ResponseToLLMPrompt(response []byte) (core.LLMPrompt, error) {
+	var llmResponse LLMResponse
+	err := json.Unmarshal(response, &llmResponse)
+	if err != nil {
+		return core.LLMPrompt{}, err
+	}
+	numMessages := len(llmResponse.Choices)
+	if numMessages == 0 {
+		return core.LLMPrompt{Role: "assistant", Content: "# Error"}, nil
+	}
+	return core.LLMPrompt{Role: llmResponse.Choices[0].Message.Role, Content: llmResponse.Choices[0].Message.Content}, nil
 }

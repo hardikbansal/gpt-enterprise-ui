@@ -14,6 +14,7 @@ type GoogleUserInfo struct {
 	Email   string `json:"email"`
 	Name    string `json:"name"`
 	Picture string `json:"picture"`
+	HD      string `json:"hd"`
 }
 
 type User struct {
@@ -27,6 +28,13 @@ type Conversation struct {
 	ID        uint   `json:"id"`
 	Name      string `json:"name"`
 	CreatedAt string `json:"created_at"`
+}
+
+type Template struct {
+	ID     uint     `json:"id"`
+	Name   string   `json:"name"`
+	Parts  []string `json:"parts"`
+	Params []string `json:"params"`
 }
 
 type Query struct {

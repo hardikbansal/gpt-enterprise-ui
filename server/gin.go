@@ -37,6 +37,8 @@ func StartServer(handler *handlers.ApiHandler, port string) {
 	group.GET("/conversation", handler.GetConversations)
 	group.POST("/query", handler.DoQuery)
 	group.GET("/query", handler.GetQueries)
+	group.POST("/template", handler.StoreTemplate)
+	group.GET("/template", handler.GetTemplates)
 	logger.LogMessage("starting http server")
 	err := router.Run("0.0.0.0:" + port)
 	if err != nil {

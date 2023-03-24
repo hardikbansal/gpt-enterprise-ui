@@ -1,0 +1,44 @@
+services:
+  apiserver:
+    build: .
+    volumes:
+#      - "./:/server/"
+      - "./.env:/config/.env"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${API_PORT}:${API_PORT}"
+
+  postgres:
+    image: "postgres:13.10"
+    environment:
+      POSTGRES_USER: "${DATABASE_USER}"
+      POSTGRES_DB: "${DATABASE_NAME}"
+      POSTGRES_PASSWORD: "${DATABASE_PASSWORD}"
+    ports:
+      - "7432:5432"
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DATABASE_USER}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  node-server:
+    image: "node:14.17.0"
+    command: >
+            sh -c "npm install && npm run start"
+    working_dir: "/server/ui"
+    environment:
+      PORT: 8090
+      REACT_APP_API_ENDPOINT: "${API_HOST}:${API_PORT}"
+      REACT_APP_GOOGLE_LOGIN_CLIENT_ID: "${GOOGLE_LOGIN_CLIENT_ID}"
+      REACT_APP_DEBUG: ${IS_DEBUG}
+    volumes:
+      - "./:/server"
+    ports:
+      - "${UI_PORT}:8090"
+    depends_on:
+      - apiserver

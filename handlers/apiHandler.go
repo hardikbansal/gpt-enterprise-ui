@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	logger "github.com/hardikbansal/gpt-enterprise-ui/logger"
 	"net/http"
 	"strconv"
 
@@ -66,76 +67,98 @@ func (handler *ApiHandler) GetUserDetails(c *gin.Context) {
 
 func (handler *ApiHandler) GetConversations(c *gin.Context) {
 	userId := c.GetInt("user_id")
+	logger.LogMessage(fmt.Sprintf("User Id : %s", userId))
 	conversations, err := handler.srv.GetConversationsForUser(userId)
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
-	conversationsJson, err := json.Marshal(conversations)
-	if err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
-	}
-	c.JSON(http.StatusOK, conversationsJson)
+	c.JSON(http.StatusOK, conversations)
 
 }
 
 func (handler *ApiHandler) CreateNewConversation(c *gin.Context) {
 	userId := c.GetInt("user_id")
 	// get POST request parameter from context c
-	conversationName := c.PostForm("conversation_name")
+	var data struct {
+		Name string `json:"name"`
+	}
+	err := c.BindJSON(&data)
+	logger.LogMessage(fmt.Sprintf("Conversation Name %s", data.Name))
 	// Create New Conversation
-	conversations, err := handler.srv.CreateNewConversation(userId, conversationName)
+	conversations, err := handler.srv.CreateNewConversation(userId, data.Name)
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
-	conversationsJson, err := json.Marshal(conversations)
-	if err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
-	}
-	c.JSON(http.StatusOK, conversationsJson)
+	c.JSON(http.StatusOK, conversations)
 }
 
 func (handler *ApiHandler) DoQuery(c *gin.Context) {
 	// get POST request parameter from context c
-	query := c.PostForm("query")
-	converationId, err := strconv.Atoi(c.PostForm("conversation_id"))
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "conversation_id must be an integer"})
-		return
+	var data struct {
+		Query          string `json:"query"`
+		ConversationId int    `json:"conversation_id"`
+		Context        bool   `json:"context"`
 	}
-	isContext, err := strconv.ParseBool(c.PostForm("context"))
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "context must be a boolean"})
-	}
+	err := c.BindJSON(&data)
+	logger.LogMessage(fmt.Sprintf("data: %s", data))
 	// Create New Conversation
-	conversations, err := handler.srv.QueryLLM(query, converationId, isContext)
+	queries, err := handler.srv.QueryLLM(data.Query, data.ConversationId, data.Context)
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
-	conversationsJson, err := json.Marshal(conversations)
-	if err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
-	}
-	c.JSON(http.StatusOK, conversationsJson)
+	c.JSON(http.StatusOK, queries)
 }
 
 func (handler *ApiHandler) GetQueries(c *gin.Context) {
-	conversationId, err := strconv.Atoi(c.PostForm("conversation_id"))
+	var conversationId string
+	conversationId, isPresent := c.GetQuery("conversationId")
+	if !isPresent {
+		conversationId = ""
+	}
+	conversationIdInt, err := strconv.Atoi(conversationId)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "conversation_id must be an integer"})
 		return
 	}
 	// Create New Conversation
-	queries, err := handler.srv.GetQueriesForConversation(conversationId)
+	queries, err := handler.srv.GetQueriesForConversation(conversationIdInt)
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
-	conversationsJson, err := json.Marshal(queries)
+	c.JSON(http.StatusOK, queries)
+}
+
+func (handler *ApiHandler) GetTemplates(c *gin.Context) {
+	userId := c.GetInt("user_id")
+	logger.LogMessage(fmt.Sprintf("User Id : %s", userId))
+	templates, err := handler.srv.GetTemplates(userId)
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
+		return
 	}
-	c.JSON(http.StatusOK, conversationsJson)
+	c.JSON(http.StatusOK, templates)
+}
+
+func (handler *ApiHandler) StoreTemplate(c *gin.Context) {
+	userId := c.GetInt("user_id")
+	// get POST request parameter from context c
+	var data struct {
+		TemplateName string   `json:"name"`
+		Parts        []string `json:"parts"`
+		Params       []string `json:"params"`
+	}
+	err := c.BindJSON(&data)
+	logger.LogMessage(fmt.Sprintf("User Id : %s params %s parts %s with template name %s", userId, data.Params, data.Parts, data.TemplateName))
+	//c.AbortWithStatus(http.StatusInternalServerError)
+	//return
+	templates, err := handler.srv.StoreTemplate(userId, data.TemplateName, data.Parts, data.Params)
+	if err != nil {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+	c.JSON(http.StatusOK, templates)
 }

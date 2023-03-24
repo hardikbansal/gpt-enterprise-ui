@@ -20,9 +20,10 @@ func (adapter *DbAdapter) RunMigrations() {
 		logger.LogProblem("Error auto migrating query table")
 		return
 	}
-	//do auto migration for message_conversation table
-	err = adapter.db.AutoMigrate(&Prompt{})
+
+	//do auto migration for templates table
+	err = adapter.db.AutoMigrate(&Template{})
 	if err != nil {
-		logger.LogProblem("Error auto migrating promts table")
+		logger.LogProblem("Error auto migrating template table")
 	}
 }

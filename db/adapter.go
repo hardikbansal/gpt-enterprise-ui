@@ -3,6 +3,7 @@ package db
 import (
 	"errors"
 	"fmt"
+	"github.com/goccy/go-json"
 	"github.com/hardikbansal/gpt-enterprise-ui/core"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -96,4 +97,21 @@ func (adapter *DbAdapter) GetContextForQuery(conversationId int, context int) ([
 	return Map(queries, func(q Query) core.Query {
 		return q.ToCoreQuery()
 	}), result.Error
+}
+
+func (adapter *DbAdapter) GetTemplatesByUserId(userId int) ([]core.Template, error) {
+	var templates []Template
+	result := adapter.db.Where(&Template{UserID: uint(userId)}).Order("created_at DESC").Limit(20).Find(&templates)
+	return Map(templates, func(q Template) core.Template {
+		return q.toCore()
+	}), result.Error
+}
+
+func (adapter *DbAdapter) StoreTemplate(templateName string, userId int, parts []string, params []string) error {
+	properties, err := json.Marshal(TemplateProperties{Parts: parts, Params: params})
+	if err != nil {
+		return err
+	}
+	result := adapter.db.Create(&Template{UserID: uint(userId), Name: templateName, Properties: properties})
+	return result.Error
 }

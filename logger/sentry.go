@@ -1,11 +1,8 @@
 package reporting
 
 import (
-	"bytes"
 	"fmt"
 	"log"
-	"os/exec"
-	"strings"
 	"sync"
 
 	"github.com/getsentry/sentry-go"
@@ -51,9 +48,7 @@ func initReporting() *Logger {
 			Debug:            config.IsDebug,
 			AttachStacktrace: true,
 			EnableTracing:    true,
-			Release:          getCommitId(),
 			Environment:      config.SentryEnvironment,
-			TracesSampleRate: config.SentrySampleRatePct / 100.00,
 		})
 		if err != nil {
 			LogPanic("sentry.Init: %s", err)
@@ -63,23 +58,6 @@ func initReporting() *Logger {
 
 	log.SetFlags(log.Ldate | log.Ltime | log.Llongfile)
 	return &Logger{}
-}
-
-func getCommitId() string {
-	if len(strings.TrimSpace(config.GetInstance().GitCommitId)) > 0 {
-		return config.GetInstance().GitCommitId
-	}
-
-	var sout, serr bytes.Buffer
-	cmd := exec.Command("git", "rev-parse", "--short", "HEAD")
-	cmd.Stdout = &sout
-	cmd.Stderr = &serr
-	err := cmd.Run()
-	if err != nil {
-		panic(serr.String())
-	}
-	commitId := sout.String()
-	return commitId
 }
 
 func LogProblem(format string, args ...any) {
