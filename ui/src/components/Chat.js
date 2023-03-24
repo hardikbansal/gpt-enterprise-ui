@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import MarkdownView from 'react-showdown';
 import "./Chat.css";
 import ConversationMenu from "./ConversationMenu";
+import SendLogo from "../assets.images/send.png"
 
 function Chat() {
   const [input, setInput] = useState("");
@@ -72,7 +73,7 @@ For larger values of 'n', the function uses a while loop to generate the fibonac
 
   return (
     <div className="flex flex-row h-screen">
-      <div className="w-1/5 bg-red-200 h-full">
+      <div className="w-1/5 h-full">
         <ConversationMenu/>
       </div>
       <div className="flex flex-col">
@@ -116,7 +117,7 @@ function InputBox(props) {
     setQuery(event.target.value);
   }
 
-  function onClick (){
+  function onClick () {
     props.onSubmit(query);
     console.log(query);
     setQuery("");
@@ -124,15 +125,12 @@ function InputBox(props) {
 
   return (
     
-      <div className="w-full p-6 text-sm border border-gray-300 rounded-lg bg-gray-50 py-3 px-2">
+      <div className="w-full flex p-6 text-sm border border-gray-300 rounded-lg bg-gray-50 py-3 px-2">
         <input type="text" id="query" value={query} onChange={onInputChange}
           className="block w-full max-w-full p-4 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-          placeholder="Write a question" required /> 
-        <button type="submit" onClick={onClick} className="text-white absolute right-2.5 bottom-2.5 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-          {props.bt_title}
-        </button>
+          placeholder="Write a question" required />  
+        <img src={SendLogo} width="40" stroke onClick={onClick} alt="send logo"/>
       </div>
-     
 
   );
 }
